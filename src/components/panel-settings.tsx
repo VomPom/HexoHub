@@ -931,18 +931,14 @@ export function PanelSettings({ postsPerPage, onPostsPerPageChange, autoSaveInte
               <p className="text-sm text-muted-foreground mr-2">
                 {t.enableAIDescription}
               </p>
-              <a
-                href="#"
-                onClick={async (e) => {
-                  e.preventDefault();
+              <span
+                onClick={async () => {
                   await openExternalLink('https://2am.top/2025/09/13/Hexohub%E5%BC%80%E5%8F%91%E6%97%A5%E5%BF%972/#AI%E5%8A%9F%E8%83%BD');
                 }}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                className="text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
               >
                 {t.aboutAILink}
-              </a>
+              </span>
             </div>
 
             {/* 编辑器AI增强 */}
@@ -1006,16 +1002,14 @@ export function PanelSettings({ postsPerPage, onPostsPerPageChange, autoSaveInte
                         {t.siliconflow}
                         <Tooltip>
                           <TooltipTrigger asChild>
-                            <a
-                              href="#"
-                              onClick={async (e) => {
-                                e.preventDefault();
+                            <span
+                              onClick={async () => {
                                 await openExternalLink('https://siliconflow.cn');
                               }}
-                              className="inline-flex items-center text-blue-600 hover:text-blue-800"
+                              className="inline-flex items-center text-blue-600 hover:text-blue-800 cursor-pointer"
                             >
                               <HelpCircle className="w-3.5 h-3.5" />
-                            </a>
+                            </span>
                           </TooltipTrigger>
                           <TooltipContent 
                             className="w-[280px] !bg-slate-900 !text-white !border-slate-700 !px-3 !py-2.5 [&_svg]:!bg-slate-900 [&_svg]:!fill-slate-900"
@@ -1242,34 +1236,26 @@ export function PanelSettings({ postsPerPage, onPostsPerPageChange, autoSaveInte
           
           <div className="space-y-2">
             <Label>{t.projectAddress}</Label>
-            <a 
-              href="#"
-              onClick={async (e) => {
-                e.preventDefault();
+            <span
+              onClick={async () => {
                 await openExternalLink('https://github.com/forever218/HexoHub');
-              }} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-sm text-blue-600 hover:text-blue-800 hover:underline block"
+              }}
+              className="text-sm text-blue-600 hover:text-blue-800 hover:underline block cursor-pointer"
             >
               https://github.com/forever218/HexoHub
-            </a>
+            </span>
           </div>
           
           <div className="space-y-2">
             <Label>{t.contactMe}</Label>
-            <a 
-              href="#"
-              onClick={async (e) => {
-                e.preventDefault();
+            <span
+              onClick={async () => {
                 await openExternalLink('https://github.com/forever218');
-              }} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-sm text-blue-600 hover:text-blue-800 hover:underline block"
+              }}
+              className="text-sm text-blue-600 hover:text-blue-800 hover:underline block cursor-pointer"
             >
               https://github.com/forever218
-            </a>
+            </span>
           </div>
           
           <div className="pt-4 text-center text-muted-foreground">

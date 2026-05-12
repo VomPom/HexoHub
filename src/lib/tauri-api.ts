@@ -153,6 +153,14 @@ export const commandOperations = {
     }
     throw new Error('Not in Tauri environment');
   },
+
+  executeCustomCommand: async (command: string, workingDir: string): Promise<any> => {
+    if (isTauriEnvironment()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      return await invoke('execute_custom_command', { command, workingDir });
+    }
+    throw new Error('Not in Tauri environment');
+  },
   
   validateHexoProject: async (directoryPath: string, language: string): Promise<any> => {
     if (isTauriEnvironment()) {
@@ -162,10 +170,10 @@ export const commandOperations = {
     throw new Error('Not in Tauri environment');
   },
   
-  startHexoServer: async (workingDir: string): Promise<any> => {
+  startHexoServer: async (workingDir: string, customCommand?: string): Promise<any> => {
     if (isTauriEnvironment()) {
       const { invoke } = await import('@tauri-apps/api/core');
-      return await invoke('start_hexo_server', { workingDir });
+      return await invoke('start_hexo_server', { workingDir, customCommand: customCommand || null });
     }
     throw new Error('Not in Tauri environment');
   },
@@ -282,10 +290,12 @@ export const ipcRenderer = {
         return commandOperations.execute(args[0]);
       case 'execute-hexo-command':
         return commandOperations.executeHexo(args[0], args[1]);
+      case 'execute-custom-command':
+        return commandOperations.executeCustomCommand(args[0], args[1]);
       case 'validate-hexo-project':
         return commandOperations.validateHexoProject(args[0], args[1]);
       case 'start-hexo-server':
-        return commandOperations.startHexoServer(args[0]);
+        return commandOperations.startHexoServer(args[0], args[1]);
       case 'stop-hexo-server':
         return commandOperations.stopHexoServer();
       case 'fix-port-conflict':

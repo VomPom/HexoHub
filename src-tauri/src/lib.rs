@@ -276,6 +276,48 @@ async fn execute_hexo_command(command: String, working_dir: String) -> CommandRe
     }
 }
 
+// 执行自定义命令（直接执行整条命令，不拼接hexo前缀）
+#[tauri::command]
+async fn execute_custom_command(command: String, working_dir: String) -> CommandResult {
+    let output = if cfg!(target_os = "windows") {
+        Command::new("cmd")
+            .args(&["/C", &command])
+            .current_dir(&working_dir)
+            .creation_flags(0x08000000) // CREATE_NO_WINDOW
+            .output()
+    } else {
+        Command::new("sh")
+            .arg("-c")
+            .arg(&command)
+            .current_dir(&working_dir)
+            .output()
+    };
+
+    match output {
+        Ok(output) => {
+            let stdout = smart_decode(&output.stdout);
+            let stderr = smart_decode(&output.stderr);
+
+            CommandResult {
+                success: output.status.success(),
+                stdout: Some(stdout.clone()),
+                stderr: Some(stderr.clone()),
+                error: if !output.status.success() && stdout.is_empty() && stderr.is_empty() {
+                    Some("命令执行失败，未返回输出".to_string())
+                } else {
+                    None
+                },
+            }
+        },
+        Err(e) => CommandResult {
+            success: false,
+            stdout: None,
+            stderr: None,
+            error: Some(format!("命令执行错误: {}", e)),
+        },
+    }
+}
+
 // 验证 Hexo 项目
 #[tauri::command]
 async fn validate_hexo_project(directory_path: String, language: String) -> ValidationResult {
@@ -443,7 +485,7 @@ async fn fix_port_conflict(port: u16) -> Result<CommandResult, String> {
 
 // 启动 Hexo 服务器（异步，监听输出判断启动状态）
 #[tauri::command]
-async fn start_hexo_server(working_dir: String, server_state: State<'_, HexoServer>) -> Result<CommandResult, String> {
+async fn start_hexo_server(working_dir: String, custom_command: Option<String>, server_state: State<'_, HexoServer>) -> Result<CommandResult, String> {
     // 停止现有服务器
     let mut server = server_state.0.lock().unwrap();
     if let Some(mut child) = server.take() {
@@ -451,15 +493,24 @@ async fn start_hexo_server(working_dir: String, server_state: State<'_, HexoServ
     }
     drop(server); // 释放锁，避免后续阻塞
     
-    let hexo_cmd = if cfg!(target_os = "windows") {
-        "hexo.cmd"
+    let mut cmd = if let Some(ref custom) = custom_command {
+        // 自定义指令：直接执行整条命令
+        let parts: Vec<String> = shell_words::split(custom).unwrap_or_else(|_| vec![custom.clone()]);
+        if parts.is_empty() {
+            return Err("自定义命令为空".to_string());
+        }
+        let mut c = Command::new(&parts[0]);
+        c.args(&parts[1..]);
+        c
     } else {
-        "hexo"
+        // 默认：hexo server
+        let hexo_cmd = if cfg!(target_os = "windows") { "hexo.cmd" } else { "hexo" };
+        let mut c = Command::new(hexo_cmd);
+        c.arg("server");
+        c
     };
-    
-    let mut cmd = Command::new(hexo_cmd);
-    cmd.arg("server")
-        .current_dir(&working_dir)
+
+    cmd.current_dir(&working_dir)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
     
@@ -928,6 +979,7 @@ pub fn run() {
         list_files,
         execute_command,
         execute_hexo_command,
+        execute_custom_command,
         validate_hexo_project,
         start_hexo_server,
         stop_hexo_server,

@@ -44,6 +44,17 @@ interface PanelSettingsProps {
   onPushUsernameChange?: (value: string) => void;
   pushEmail?: string;
   onPushEmailChange?: (value: string) => void;
+  // 自定义指令设置
+  enableCustomCommands?: boolean;
+  onEnableCustomCommandsChange?: (value: boolean) => void;
+  customCleanCommand?: string;
+  onCustomCleanCommandChange?: (value: string) => void;
+  customGenerateCommand?: string;
+  onCustomGenerateCommandChange?: (value: string) => void;
+  customServerCommand?: string;
+  onCustomServerCommandChange?: (value: string) => void;
+  customDeployCommand?: string;
+  onCustomDeployCommandChange?: (value: string) => void;
   // AI设置
   enableAI?: boolean;
   onEnableAIChange?: (value: boolean) => void;
@@ -77,7 +88,7 @@ interface PanelSettingsProps {
   onIframeUrlModeChange?: (value: 'hexo' | 'root') => void;
 }
 
-export function PanelSettings({ postsPerPage, onPostsPerPageChange, autoSaveInterval, onAutoSaveIntervalChange, updateAvailable, onUpdateCheck, updateCheckInProgress, autoCheckUpdates = true, onAutoCheckUpdatesChange, editorMode, onEditorModeChange, backgroundImage = '', onBackgroundImageChange, backgroundOpacity = 1, onBackgroundOpacityChange, language, enablePush = false, onEnablePushChange, pushRepoUrl = '', onPushRepoUrlChange, pushBranch = 'main', onPushBranchChange, pushUsername = '', onPushUsernameChange, pushEmail = '', onPushEmailChange, enableAI = false, onEnableAIChange, enableEditorAI = false, onEnableEditorAIChange, aiProvider = 'deepseek', onAIProviderChange, apiKey = '', onApiKeyChange, prompt = '你是一个灵感提示机器人，我是一个独立博客的博主，我想写一篇博客，请你给我一个可写内容的灵感，不要超过200字，不要分段', onPromptChange, analysisPrompt = '你是一个文章分析机器人，以下是我的博客数据{content}，请你分析并给出鼓励性的话语，不要超过200字，不要分段', onAnalysisPromptChange, aiRewritePrompt = '请直接重写以下文本，使其更清晰流畅，保持原意。只输出改写后的文本，不要添加任何解释或说明', onAiRewritePromptChange, aiImprovePrompt = '请直接改进以下文本，使其更专业、生动。只输出改进后的文本，不要添加任何解释或说明', onAiImprovePromptChange, aiExpandPrompt = '请扩展以下文本，适当添加细节。只输出扩展后的文本，不要添加解释或标注', onAiExpandPromptChange, aiTranslatePrompt = '请直接将以下文本翻译成英文。只输出翻译结果，不要添加任何解释或说明', onAiTranslatePromptChange, openaiModel = 'gpt-3.5-turbo', onOpenaiModelChange, openaiApiEndpoint = 'https://api.openai.com/v1', onOpenaiApiEndpointChange, previewMode = 'static', onPreviewModeChange, iframeUrlMode = 'hexo', onIframeUrlModeChange }: PanelSettingsProps) {
+export function PanelSettings({ postsPerPage, onPostsPerPageChange, autoSaveInterval, onAutoSaveIntervalChange, updateAvailable, onUpdateCheck, updateCheckInProgress, autoCheckUpdates = true, onAutoCheckUpdatesChange, editorMode, onEditorModeChange, backgroundImage = '', onBackgroundImageChange, backgroundOpacity = 1, onBackgroundOpacityChange, language, enablePush = false, onEnablePushChange, pushRepoUrl = '', onPushRepoUrlChange, pushBranch = 'main', onPushBranchChange, pushUsername = '', onPushUsernameChange, pushEmail = '', onPushEmailChange, enableCustomCommands = false, onEnableCustomCommandsChange, customCleanCommand = 'hexo clean', onCustomCleanCommandChange, customGenerateCommand = 'hexo generate', onCustomGenerateCommandChange, customServerCommand = 'hexo server', onCustomServerCommandChange, customDeployCommand = 'hexo deploy', onCustomDeployCommandChange, enableAI = false, onEnableAIChange, enableEditorAI = false, onEnableEditorAIChange, aiProvider = 'deepseek', onAIProviderChange, apiKey = '', onApiKeyChange, prompt = '你是一个灵感提示机器人，我是一个独立博客的博主，我想写一篇博客，请你给我一个可写内容的灵感，不要超过200字，不要分段', onPromptChange, analysisPrompt = '你是一个文章分析机器人，以下是我的博客数据{content}，请你分析并给出鼓励性的话语，不要超过200字，不要分段', onAnalysisPromptChange, aiRewritePrompt = '请直接重写以下文本，使其更清晰流畅，保持原意。只输出改写后的文本，不要添加任何解释或说明', onAiRewritePromptChange, aiImprovePrompt = '请直接改进以下文本，使其更专业、生动。只输出改进后的文本，不要添加任何解释或说明', onAiImprovePromptChange, aiExpandPrompt = '请扩展以下文本，适当添加细节。只输出扩展后的文本，不要添加解释或标注', onAiExpandPromptChange, aiTranslatePrompt = '请直接将以下文本翻译成英文。只输出翻译结果，不要添加任何解释或说明', onAiTranslatePromptChange, openaiModel = 'gpt-3.5-turbo', onOpenaiModelChange, openaiApiEndpoint = 'https://api.openai.com/v1', onOpenaiApiEndpointChange, previewMode = 'static', onPreviewModeChange, iframeUrlMode = 'hexo', onIframeUrlModeChange }: PanelSettingsProps) {
   // 当前应用版本，从package.json动态获取
   const [currentVersion, setCurrentVersion] = useState<string>('Unknown');
   // 获取当前语言的文本
@@ -120,6 +131,12 @@ export function PanelSettings({ postsPerPage, onPostsPerPageChange, autoSaveInte
   const [tempPushBranch, setTempPushBranch] = useState<string>(pushBranch);
   const [tempPushUsername, setTempPushUsername] = useState<string>(pushUsername);
   const [tempPushEmail, setTempPushEmail] = useState<string>(pushEmail);
+  // 自定义指令相关状态
+  const [tempEnableCustomCommands, setTempEnableCustomCommands] = useState<boolean>(enableCustomCommands);
+  const [tempCustomCleanCommand, setTempCustomCleanCommand] = useState<string>(customCleanCommand);
+  const [tempCustomGenerateCommand, setTempCustomGenerateCommand] = useState<string>(customGenerateCommand);
+  const [tempCustomServerCommand, setTempCustomServerCommand] = useState<string>(customServerCommand);
+  const [tempCustomDeployCommand, setTempCustomDeployCommand] = useState<string>(customDeployCommand);
   // AI设置相关状态
   const [tempEnableAI, setTempEnableAI] = useState<boolean>(enableAI);
   const [tempEnableEditorAI, setTempEnableEditorAI] = useState<boolean>(enableEditorAI);
@@ -200,6 +217,23 @@ export function PanelSettings({ postsPerPage, onPostsPerPageChange, autoSaveInte
   useEffect(() => {
     setTempPushEmail(pushEmail);
   }, [pushEmail]);
+
+  // 当传入的自定义指令设置变化时，更新临时值
+  useEffect(() => {
+    setTempEnableCustomCommands(enableCustomCommands);
+  }, [enableCustomCommands]);
+  useEffect(() => {
+    setTempCustomCleanCommand(customCleanCommand);
+  }, [customCleanCommand]);
+  useEffect(() => {
+    setTempCustomGenerateCommand(customGenerateCommand);
+  }, [customGenerateCommand]);
+  useEffect(() => {
+    setTempCustomServerCommand(customServerCommand);
+  }, [customServerCommand]);
+  useEffect(() => {
+    setTempCustomDeployCommand(customDeployCommand);
+  }, [customDeployCommand]);
 
   // 当传入的enableAI变化时，更新临时值
   useEffect(() => {
@@ -436,6 +470,12 @@ export function PanelSettings({ postsPerPage, onPostsPerPageChange, autoSaveInte
     if (onPushBranchChange) onPushBranchChange(tempPushBranch);
     if (onPushUsernameChange) onPushUsernameChange(tempPushUsername);
     if (onPushEmailChange) onPushEmailChange(tempPushEmail);
+    // 保存自定义指令设置
+    if (onEnableCustomCommandsChange) onEnableCustomCommandsChange(tempEnableCustomCommands);
+    if (onCustomCleanCommandChange) onCustomCleanCommandChange(tempCustomCleanCommand);
+    if (onCustomGenerateCommandChange) onCustomGenerateCommandChange(tempCustomGenerateCommand);
+    if (onCustomServerCommandChange) onCustomServerCommandChange(tempCustomServerCommand);
+    if (onCustomDeployCommandChange) onCustomDeployCommandChange(tempCustomDeployCommand);
     // 保存AI设置
     if (onEnableAIChange) onEnableAIChange(tempEnableAI);
     if (onEnableEditorAIChange) onEnableEditorAIChange(tempEnableEditorAI);
@@ -463,6 +503,12 @@ export function PanelSettings({ postsPerPage, onPostsPerPageChange, autoSaveInte
       localStorage.setItem('push-branch', tempPushBranch);
       localStorage.setItem('push-username', tempPushUsername);
       localStorage.setItem('push-email', tempPushEmail);
+      // 保存自定义指令设置
+      localStorage.setItem('enable-custom-commands', tempEnableCustomCommands.toString());
+      localStorage.setItem('custom-clean-command', tempCustomCleanCommand);
+      localStorage.setItem('custom-generate-command', tempCustomGenerateCommand);
+      localStorage.setItem('custom-server-command', tempCustomServerCommand);
+      localStorage.setItem('custom-deploy-command', tempCustomDeployCommand);
       // 保存AI设置
       localStorage.setItem('enable-ai', tempEnableAI.toString());
       localStorage.setItem('enable-editor-ai', tempEnableEditorAI.toString());
@@ -792,6 +838,75 @@ export function PanelSettings({ postsPerPage, onPostsPerPageChange, autoSaveInte
                       value={tempPushEmail}
                       onChange={(e) => setTempPushEmail(e.target.value)}
                       placeholder={t.pushEmailPlaceholder || 'Git邮箱'}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 自定义指令设置 */}
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="enableCustomCommands"
+                  checked={tempEnableCustomCommands}
+                  onChange={(e) => setTempEnableCustomCommands(e.target.checked)}
+                  className="w-4 h-4"
+                />
+                <Label htmlFor="enableCustomCommands">{t.enableCustomCommands || '自定义指令'}</Label>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                {t.enableCustomCommandsDescription || '启用后可以自定义完整的Hexo命令'}
+              </p>
+
+              {tempEnableCustomCommands && (
+                <div className="mt-4 space-y-4 pl-6 border-l-2 border-gray-200">
+                  <div className="space-y-2">
+                    <Label htmlFor="customCleanCommand">{t.customCleanCommand || '清理指令'}</Label>
+                    <Input
+                      id="customCleanCommand"
+                      type="text"
+                      value={tempCustomCleanCommand}
+                      onChange={(e) => setTempCustomCleanCommand(e.target.value)}
+                      placeholder={t.customCleanCommandPlaceholder || '例如: hexo clean'}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="customGenerateCommand">{t.customGenerateCommand || '生成指令'}</Label>
+                    <Input
+                      id="customGenerateCommand"
+                      type="text"
+                      value={tempCustomGenerateCommand}
+                      onChange={(e) => setTempCustomGenerateCommand(e.target.value)}
+                      placeholder={t.customGenerateCommandPlaceholder || '例如: hexo generate'}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="customServerCommand">{t.customServerCommand || '启动服务器指令'}</Label>
+                    <Input
+                      id="customServerCommand"
+                      type="text"
+                      value={tempCustomServerCommand}
+                      onChange={(e) => setTempCustomServerCommand(e.target.value)}
+                      placeholder={t.customServerCommandPlaceholder || '例如: hexo server'}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="customDeployCommand">{t.customDeployCommand || '部署指令'}</Label>
+                    <Input
+                      id="customDeployCommand"
+                      type="text"
+                      value={tempCustomDeployCommand}
+                      onChange={(e) => setTempCustomDeployCommand(e.target.value)}
+                      placeholder={t.customDeployCommandPlaceholder || '例如: hexo deploy'}
                       className="w-full"
                     />
                   </div>

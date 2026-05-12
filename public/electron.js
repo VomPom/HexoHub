@@ -434,6 +434,42 @@ ipcMain.handle('execute-hexo-command', async (event, command, workingDir) => {
   }
 });
 
+// 执行自定义命令（直接执行整条命令，不拼接hexo前缀）
+ipcMain.handle('execute-custom-command', async (event, command, workingDir) => {
+  const { exec } = require('child_process');
+  const util = require('util');
+  const execPromise = util.promisify(exec);
+
+  try {
+    const wrappedCommand = WindowsCompat.wrapCommand(command);
+    const execOptions = WindowsCompat.getExecOptions({
+      cwd: workingDir,
+      windowsHide: true
+    });
+
+    const result = await execPromise(wrappedCommand, execOptions);
+
+    const stdout = WindowsCompat.decodeCommandOutput(result.stdout);
+    const stderr = WindowsCompat.decodeCommandOutput(result.stderr);
+
+    return {
+      success: true,
+      stdout: stdout,
+      stderr: stderr
+    };
+  } catch (error) {
+    const stdout = WindowsCompat.decodeCommandOutput(error.stdout);
+    const stderr = WindowsCompat.decodeCommandOutput(error.stderr);
+
+    return {
+      success: false,
+      error: error.message,
+      stdout: stdout,
+      stderr: stderr
+    };
+  }
+});
+
 // Check if directory is a valid hexo project
 ipcMain.handle('validate-hexo-project', async (event, directoryPath, language) => {
   const fs = require('fs').promises;
@@ -491,7 +527,7 @@ ipcMain.handle('validate-hexo-project', async (event, directoryPath, language) =
 let hexoServerProcess = null;
 
 // 启动Hexo服务器
-ipcMain.handle('start-hexo-server', async (event, workingDir) => {
+ipcMain.handle('start-hexo-server', async (event, workingDir, customCommand) => {
   const { spawn } = require('child_process');
 
   try {
@@ -528,12 +564,20 @@ ipcMain.handle('start-hexo-server', async (event, workingDir) => {
       });
     }
 
-    // 使用Windows兼容性工具
-    const hexoCommand = WindowsCompat.getHexoCommand();
-
     // 启动Hexo服务器
+    let serverCommand, serverArgs;
+    if (customCommand) {
+      // 自定义指令：直接执行整条命令
+      const parts = customCommand.split(/\s+/);
+      serverCommand = parts[0];
+      serverArgs = parts.slice(1);
+    } else {
+      // 默认：hexo server
+      serverCommand = WindowsCompat.getHexoCommand();
+      serverArgs = ['server'];
+    }
 
-    hexoServerProcess = spawn(hexoCommand, ['server'], {
+    hexoServerProcess = spawn(serverCommand, serverArgs, {
       cwd: workingDir,
       shell: true,
       detached: false,

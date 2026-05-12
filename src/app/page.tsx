@@ -143,6 +143,13 @@ export default function Home() {
   const [pushUsername, setPushUsername] = useState<string>(''); // 推送用户名
   const [pushEmail, setPushEmail] = useState<string>(''); // 推送邮箱
 
+  // 自定义指令相关状态
+  const [enableCustomCommands, setEnableCustomCommands] = useState<boolean>(false); // 是否启用自定义指令
+  const [customCleanCommand, setCustomCleanCommand] = useState<string>('hexo clean'); // 自定义清理指令
+  const [customGenerateCommand, setCustomGenerateCommand] = useState<string>('hexo generate'); // 自定义生成指令
+  const [customServerCommand, setCustomServerCommand] = useState<string>('hexo server'); // 自定义启动服务器指令
+  const [customDeployCommand, setCustomDeployCommand] = useState<string>('hexo deploy'); // 自定义部署指令
+
   // AI设置相关状态
   const [enableAI, setEnableAI] = useState<boolean>(false); // 是否启用AI
   const [enableEditorAI, setEnableEditorAI] = useState<boolean>(false); // 是否启用编辑器AI增强
@@ -417,6 +424,32 @@ export default function Home() {
         const savedPushEmail = localStorage.getItem('push-email');
         if (savedPushEmail !== null) {
           setPushEmail(savedPushEmail);
+        }
+
+        // 加载自定义指令设置
+        const savedEnableCustomCommands = localStorage.getItem('enable-custom-commands');
+        if (savedEnableCustomCommands !== null) {
+          setEnableCustomCommands(savedEnableCustomCommands === 'true');
+        }
+
+        const savedCustomCleanCommand = localStorage.getItem('custom-clean-command');
+        if (savedCustomCleanCommand !== null) {
+          setCustomCleanCommand(savedCustomCleanCommand);
+        }
+
+        const savedCustomGenerateCommand = localStorage.getItem('custom-generate-command');
+        if (savedCustomGenerateCommand !== null) {
+          setCustomGenerateCommand(savedCustomGenerateCommand);
+        }
+
+        const savedCustomServerCommand = localStorage.getItem('custom-server-command');
+        if (savedCustomServerCommand !== null) {
+          setCustomServerCommand(savedCustomServerCommand);
+        }
+
+        const savedCustomDeployCommand = localStorage.getItem('custom-deploy-command');
+        if (savedCustomDeployCommand !== null) {
+          setCustomDeployCommand(savedCustomDeployCommand);
         }
 
         // 加载AI设置
@@ -1852,7 +1885,7 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
   };
 
   // 执行Hexo命令
-  const executeHexoCommand = async (command: string) => {
+  const executeHexoCommand = async (command: string, useCustomExecutor?: boolean) => {
     if (!isElectron || !hexoPath) return;
 
     setIsLoading(true);
@@ -1873,7 +1906,9 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
 
     try {
       const ipcRenderer = await getIpcRenderer();
-      const result = await ipcRenderer.invoke('execute-hexo-command', command, hexoPath);
+      const result = useCustomExecutor
+        ? await ipcRenderer.invoke('execute-custom-command', command, hexoPath)
+        : await ipcRenderer.invoke('execute-hexo-command', command, hexoPath);
 
       // 添加到日志
       const newLog = {
@@ -2135,7 +2170,8 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
       
       // Tauri 后端会等待服务器就绪后才返回
       // 这个调用可能需要几秒到十几秒（取决于 Hexo 启动速度）
-      const result = await ipcRenderer.invoke('start-hexo-server', hexoPath);
+      const serverCustomCmd = enableCustomCommands ? customServerCommand : undefined;
+      const result = await ipcRenderer.invoke('start-hexo-server', hexoPath, serverCustomCmd);
 
       if (result.success) {
         setServerProcess(result.process);
@@ -2581,7 +2617,7 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
             <Button
               variant="outline"
               size="sm"
-              onClick={() => executeHexoCommand('clean')}
+              onClick={() => executeHexoCommand(enableCustomCommands ? customCleanCommand : 'clean', enableCustomCommands)}
               disabled={!isValidHexoProject || isLoading}
             >
               <Terminal className="w-4 h-4 mr-2" />
@@ -2590,7 +2626,7 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
             <Button
               variant="outline"
               size="sm"
-              onClick={() => executeHexoCommand('generate')}
+              onClick={() => executeHexoCommand(enableCustomCommands ? customGenerateCommand : 'generate', enableCustomCommands)}
               disabled={!isValidHexoProject || isLoading}
             >
               <Play className="w-4 h-4 mr-2" />
@@ -2599,7 +2635,7 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
             <Button
               variant="outline"
               size="sm"
-              onClick={() => executeHexoCommand('deploy')}
+              onClick={() => executeHexoCommand(enableCustomCommands ? customDeployCommand : 'deploy', enableCustomCommands)}
               disabled={!isValidHexoProject || isLoading}
             >
               <Globe className="w-4 h-4 mr-2" />
@@ -2904,6 +2940,17 @@ const newContent = content.replace(/^---\n[\s\S]*?\n---/, `---\n${frontMatter}\n
                 onPushUsernameChange={setPushUsername}
                 pushEmail={pushEmail}
                 onPushEmailChange={setPushEmail}
+                // 自定义指令设置
+                enableCustomCommands={enableCustomCommands}
+                onEnableCustomCommandsChange={setEnableCustomCommands}
+                customCleanCommand={customCleanCommand}
+                onCustomCleanCommandChange={setCustomCleanCommand}
+                customGenerateCommand={customGenerateCommand}
+                onCustomGenerateCommandChange={setCustomGenerateCommand}
+                customServerCommand={customServerCommand}
+                onCustomServerCommandChange={setCustomServerCommand}
+                customDeployCommand={customDeployCommand}
+                onCustomDeployCommandChange={setCustomDeployCommand}
                 // AI设置
                 enableAI={enableAI}
                 onEnableAIChange={setEnableAI}

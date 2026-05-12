@@ -299,6 +299,18 @@ export interface I18nTexts {
   pushFailed: string;
   pushing: string;
 
+  // 自定义指令设置
+  enableCustomCommands: string;
+  enableCustomCommandsDescription: string;
+  customCleanCommand: string;
+  customCleanCommandPlaceholder: string;
+  customGenerateCommand: string;
+  customGenerateCommandPlaceholder: string;
+  customServerCommand: string;
+  customServerCommandPlaceholder: string;
+  customDeployCommand: string;
+  customDeployCommandPlaceholder: string;
+
   // AI设置
   enableAI: string;
   enableAIDescription: string;
@@ -743,6 +755,18 @@ console.log('Hello, Hexo!');
     pushFailed: '推送失败',
     pushing: '推送中...',
 
+    // 自定义指令设置
+    enableCustomCommands: '自定义指令',
+    enableCustomCommandsDescription: '启用后可以自定义完整的Hexo命令',
+    customCleanCommand: '清理指令',
+    customCleanCommandPlaceholder: '例如: hexo clean',
+    customGenerateCommand: '生成指令',
+    customGenerateCommandPlaceholder: '例如: hexo generate',
+    customServerCommand: '启动服务器指令',
+    customServerCommandPlaceholder: '例如: hexo server',
+    customDeployCommand: '部署指令',
+    customDeployCommandPlaceholder: '例如: hexo deploy',
+
     // AI设置
     enableAI: '启用AI',
     enableAIDescription: '启用后获得AI支持',
@@ -1185,6 +1209,18 @@ console.log('Hello, Hexo!');
     pushSuccess: 'Push successful',
     pushFailed: 'Push failed',
     pushing: 'Pushing...',
+
+    // 自定义指令设置
+    enableCustomCommands: 'Custom Commands',
+    enableCustomCommandsDescription: 'Enable to customize full Hexo commands',
+    customCleanCommand: 'Clean Command',
+    customCleanCommandPlaceholder: 'e.g. hexo clean',
+    customGenerateCommand: 'Generate Command',
+    customGenerateCommandPlaceholder: 'e.g. hexo generate',
+    customServerCommand: 'Server Command',
+    customServerCommandPlaceholder: 'e.g. hexo server',
+    customDeployCommand: 'Deploy Command',
+    customDeployCommandPlaceholder: 'e.g. hexo deploy',
 
     // AI设置
     enableAI: 'Enable AI',

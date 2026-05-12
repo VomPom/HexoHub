@@ -12,6 +12,7 @@ interface Post {
   isDirectory: boolean;
   size: number;
   modifiedTime: Date;
+  frontmatterDate?: Date;
 }
 
 interface PublishStatsProps {

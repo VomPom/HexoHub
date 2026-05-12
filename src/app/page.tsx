@@ -81,6 +81,7 @@ interface Post {
   isDirectory: boolean;
   size: number;
   modifiedTime: Date;
+  frontmatterDate?: Date;
 }
 
 interface CommandResult {
@@ -699,23 +700,34 @@ export default function Home() {
   // 提取文章中的标签和分类
   const extractTagsAndCategories = async (posts: Post[]) => {
     if (!isElectron) return;
-    
+
     const tagsSet = new Set<string>();
     const categoriesSet = new Set<string>();
     const allTagsList: string[] = []; // 收集所有标签（包括重复的）用于标签云
-    
+    const frontmatterDates = new Map<string, Date>(); // 收集每篇文章的 frontmatter 日期
+
     try {
       const ipcRenderer = await getIpcRenderer();
-      
+
       for (const post of posts) {
         try {
           // 读取文件内容
           const content = await ipcRenderer.invoke('read-file', post.path);
-          
+
           // 解析front matter
           const frontMatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
           if (frontMatterMatch) {
             const frontMatter = frontMatterMatch[1];
+
+            // 提取 frontmatter 中的 date 字段
+            const dateMatch = frontMatter.match(/^date:\s*(.+)$/m);
+            if (dateMatch) {
+              const dateStr = dateMatch[1].trim();
+              const date = new Date(dateStr);
+              if (!isNaN(date.getTime())) {
+                frontmatterDates.set(post.path, date);
+              }
+            }
             
             // 提取标签 - 支持多种 Hexo 格式
             const parseTags = (text: string): string[] => {
@@ -852,6 +864,18 @@ export default function Home() {
         }
       }
       
+      // 更新文章列表，添加 frontmatterDate
+      if (frontmatterDates.size > 0) {
+        setPosts(prevPosts => prevPosts.map(p => {
+          const fmDate = frontmatterDates.get(p.path);
+          return fmDate ? { ...p, frontmatterDate: fmDate } : p;
+        }));
+        setFilteredPosts(prevPosts => prevPosts.map(p => {
+          const fmDate = frontmatterDates.get(p.path);
+          return fmDate ? { ...p, frontmatterDate: fmDate } : p;
+        }));
+      }
+
       setAvailableTags(Array.from(tagsSet));
       setAvailableCategories(Array.from(categoriesSet));
       setAllTagsForCloud(allTagsList); // 设置所有标签列表

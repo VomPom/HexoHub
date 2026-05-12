@@ -249,6 +249,7 @@ export interface I18nTexts {
   clearFilter: string;
   sortByFileName: string;
   sortByModifiedTime: string;
+  sortByFrontmatterDate: string;
   ascending: string;
   descending: string;
   previousPage: string;
@@ -692,6 +693,7 @@ console.log('Hello, Hexo!');
     clearFilter: '清除筛选',
     sortByFileName: '按文件名',
     sortByModifiedTime: '按修改时间',
+    sortByFrontmatterDate: '按发布日期',
     ascending: '升序',
     descending: '降序',
     previousPage: '上一页',
@@ -1134,6 +1136,7 @@ console.log('Hello, Hexo!');
     clearFilter: 'Clear Filter',
     sortByFileName: 'Sort by File Name',
     sortByModifiedTime: 'Sort by Modified Time',
+    sortByFrontmatterDate: 'Sort by Publish Date',
     ascending: 'Ascending',
     descending: 'Descending',
     previousPage: 'Previous Page',

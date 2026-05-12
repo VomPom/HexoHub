@@ -34,6 +34,7 @@ interface Post {
   isDirectory: boolean;
   size: number;
   modifiedTime: Date;
+  frontmatterDate?: Date;
 }
 
 interface PostListProps {
@@ -59,12 +60,12 @@ interface PostListProps {
   language?: Language;
 }
 
-type SortField = 'name' | 'modifiedTime';
+type SortField = 'name' | 'modifiedTime' | 'frontmatterDate';
 type SortOrder = 'asc' | 'desc';
 
 export function PostList({ posts, selectedPost, onPostSelect, isLoading = false, onDeletePosts, onAddTagsToPosts, onAddCategoriesToPosts, onDeletePost, onAddTagsToPost, onAddCategoriesToPost, availableTags = [], availableCategories = [], onFilterByTag, onFilterByCategory, onClearFilter, currentFilter = null, currentPage = 1, postsPerPage = 15, onPageChange, language = 'zh' }: PostListProps) {
   const texts = getTexts(language);
-  const [sortField, setSortField] = useState<SortField>('modifiedTime');
+  const [sortField, setSortField] = useState<SortField>('frontmatterDate');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [selectionMode, setSelectionMode] = useState<boolean>(false);
   const [selectedPosts, setSelectedPosts] = useState<Post[]>([]);
@@ -94,7 +95,7 @@ export function PostList({ posts, selectedPost, onPostSelect, isLoading = false,
       return formatDistanceToNow(new Date(date), {
         addSuffix: true,
         locale: zhCN
-      });
+      }).replace('大约', '约');
     } catch {
       return '未知时间';
     }
@@ -110,6 +111,10 @@ export function PostList({ posts, selectedPost, onPostSelect, isLoading = false,
         const aTime = new Date(a.modifiedTime).getTime();
         const bTime = new Date(b.modifiedTime).getTime();
         comparison = aTime - bTime;
+      } else if (sortField === 'frontmatterDate') {
+        const aTime = a.frontmatterDate ? new Date(a.frontmatterDate).getTime() : 0;
+        const bTime = b.frontmatterDate ? new Date(b.frontmatterDate).getTime() : 0;
+        comparison = aTime - bTime;
       }
 
       return sortOrder === 'asc' ? comparison : -comparison;
@@ -121,7 +126,7 @@ export function PostList({ posts, selectedPost, onPostSelect, isLoading = false,
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
-      setSortOrder(field === 'modifiedTime' ? 'desc' : 'asc');
+      setSortOrder((field === 'modifiedTime' || field === 'frontmatterDate') ? 'desc' : 'asc');
     }
   };
 
@@ -135,7 +140,7 @@ export function PostList({ posts, selectedPost, onPostSelect, isLoading = false,
   };
 
   const getSortLabel = () => {
-    const fieldName = sortField === 'name' ? texts.sortByFileName : texts.sortByModifiedTime;
+    const fieldName = sortField === 'name' ? texts.sortByFileName : sortField === 'frontmatterDate' ? texts.sortByFrontmatterDate : texts.sortByModifiedTime;
     const orderName = sortOrder === 'asc' ? texts.ascending : texts.descending;
     return `${fieldName} (${orderName})`;
   };
@@ -568,6 +573,13 @@ export function PostList({ posts, selectedPost, onPostSelect, isLoading = false,
                 <span>{texts.sortByModifiedTime}</span>
                 {getSortIcon('modifiedTime')}
               </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleSortChange('frontmatterDate')}
+                className="flex items-center justify-between"
+              >
+                <span>{texts.sortByFrontmatterDate}</span>
+                {getSortIcon('frontmatterDate')}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -606,7 +618,7 @@ export function PostList({ posts, selectedPost, onPostSelect, isLoading = false,
                 <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                   <div className="flex items-center space-x-1">
                     <Calendar className="w-4 h-4" />
-                    <span>{formatDate(post.modifiedTime)}</span>
+                    <span>{formatDate(post.frontmatterDate || post.modifiedTime)}</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     <File className="w-4 h-4" />

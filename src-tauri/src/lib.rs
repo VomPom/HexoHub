@@ -280,11 +280,12 @@ async fn execute_hexo_command(command: String, working_dir: String) -> CommandRe
 #[tauri::command]
 async fn execute_custom_command(command: String, working_dir: String) -> CommandResult {
     let output = if cfg!(target_os = "windows") {
-        Command::new("cmd")
-            .args(&["/C", &command])
-            .current_dir(&working_dir)
-            .creation_flags(0x08000000) // CREATE_NO_WINDOW
-            .output()
+        let mut cmd = Command::new("cmd");
+        cmd.args(&["/C", &command])
+            .current_dir(&working_dir);
+        #[cfg(target_os = "windows")]
+        cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+        cmd.output()
     } else {
         Command::new("sh")
             .arg("-c")

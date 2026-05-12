@@ -496,9 +496,13 @@ async fn start_hexo_server(working_dir: String, custom_command: Option<String>, 
     
     let mut cmd = if let Some(ref custom) = custom_command {
         // 自定义指令：直接执行整条命令
-        let parts: Vec<String> = shell_words::split(custom).unwrap_or_else(|_| vec![custom.clone()]);
+        let mut parts: Vec<String> = shell_words::split(custom).unwrap_or_else(|_| vec![custom.clone()]);
         if parts.is_empty() {
             return Err("自定义命令为空".to_string());
+        }
+        // Windows 上 hexo 需要使用 hexo.cmd
+        if cfg!(target_os = "windows") && parts[0] == "hexo" {
+            parts[0] = "hexo.cmd".to_string();
         }
         let mut c = Command::new(&parts[0]);
         c.args(&parts[1..]);
@@ -588,6 +592,7 @@ async fn start_hexo_server(working_dir: String, custom_command: Option<String>, 
     
     // 等待服务器启动（最多等待 15 秒）
     let start_time = std::time::Instant::now();
+    let is_custom = custom_command.is_some();
     let timeout = std::time::Duration::from_secs(15);
     
     while start_time.elapsed() < timeout {
@@ -612,10 +617,23 @@ async fn start_hexo_server(working_dir: String, custom_command: Option<String>, 
             // 服务器启动成功
             let mut server = server_state.0.lock().unwrap();
             *server = Some(child);
-            
+
             return Ok(CommandResult {
                 success: true,
                 stdout: Some("Hexo服务器已启动并就绪 http://localhost:4000".to_string()),
+                stderr: None,
+                error: None,
+            });
+        }
+
+        // 自定义命令：进程存活 3 秒即视为启动成功
+        if is_custom && start_time.elapsed() >= std::time::Duration::from_secs(3) {
+            let mut server = server_state.0.lock().unwrap();
+            *server = Some(child);
+
+            return Ok(CommandResult {
+                success: true,
+                stdout: Some("自定义服务器已启动".to_string()),
                 stderr: None,
                 error: None,
             });

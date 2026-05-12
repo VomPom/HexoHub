@@ -590,6 +590,21 @@ ipcMain.handle('start-hexo-server', async (event, workingDir, customCommand) => 
       let errorOutput = '';
       let serverStarted = false;
 
+      // 自定义命令时，进程存活即可视为启动成功
+      const isCustom = !!customCommand;
+      if (isCustom) {
+        setTimeout(() => {
+          if (!serverStarted && hexoServerProcess && !hexoServerProcess.exitCode) {
+            serverStarted = true;
+            resolve({
+              success: true,
+              stdout: '自定义服务器已启动',
+              process: hexoServerProcess.pid
+            });
+          }
+        }, 3000);
+      }
+
       // 监听标准输出
       hexoServerProcess.stdout.on('data', (data) => {
         const text = data.toString();

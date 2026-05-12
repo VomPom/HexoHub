@@ -426,14 +426,14 @@ export function UpdateChecker({ currentVersion, repoOwner, repoName, autoCheckUp
                     },
                     a({ children, href }: any) {
                       return (
-                        <a 
-                          href={href} 
-                          className="text-primary font-semibold hover:text-primary/80 underline decoration-2 underline-offset-2 transition-colors"
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <span
+                          onClick={async () => {
+                            if (href) await openExternalLink(href);
+                          }}
+                          className="text-primary font-semibold hover:text-primary/80 underline decoration-2 underline-offset-2 transition-colors cursor-pointer"
                         >
                           {children}
-                        </a>
+                        </span>
                       );
                     },
                     img({ src, alt }: any) {

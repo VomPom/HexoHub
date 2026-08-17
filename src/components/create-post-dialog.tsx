@@ -19,6 +19,7 @@ interface CreatePostDialogProps {
     categories: string[];
     excerpt?: string;
     template?: string;
+    customFields?: Record<string, string>;
   }) => void;
   isLoading?: boolean;
   availableTags?: string[];
@@ -41,6 +42,8 @@ export function CreatePostDialog({ open, onOpenChange, onConfirm, isLoading = fa
   const [availableTemplates, setAvailableTemplates] = useState<string[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState('post');
   const [showTemplateDropdown, setShowTemplateDropdown] = useState(false);
+  const [customFields, setCustomFields] = useState<{key: string; defaultValue: string}[]>([]);
+  const [customFieldValues, setCustomFieldValues] = useState<Record<string, string>>({});
   const tagDropdownRef = useRef<HTMLDivElement>(null);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const templateDropdownRef = useRef<HTMLDivElement>(null);
@@ -103,12 +106,21 @@ export function CreatePostDialog({ open, onOpenChange, onConfirm, isLoading = fa
       return;
     }
 
+    // Collect non-empty custom field values
+    const filledCustomFields: Record<string, string> = {};
+    Object.entries(customFieldValues).forEach(([key, value]) => {
+      if (value.trim()) {
+        filledCustomFields[key] = value.trim();
+      }
+    });
+
     onConfirm({
       title: title.trim(),
       tags,
       categories,
       excerpt: excerpt.trim() || undefined,
-      template: useCustomTemplate ? selectedTemplate : undefined
+      template: useCustomTemplate ? selectedTemplate : undefined,
+      customFields: Object.keys(filledCustomFields).length > 0 ? filledCustomFields : undefined
     });
 
     // 重置表单
@@ -120,6 +132,61 @@ export function CreatePostDialog({ open, onOpenChange, onConfirm, isLoading = fa
     setCategoryInput('');
     setUseCustomTemplate(false);
     setSelectedTemplate('post');
+    setCustomFieldValues({});
+  };
+
+  // Built-in fields that are already handled by dedicated inputs
+  const BUILTIN_FIELDS = ['title', 'date', 'tags', 'categories', 'excerpt'];
+
+  // Parse front matter from template content to extract custom fields
+  const parseTemplateFields = (content: string) => {
+    const frontMatterMatch = content.match(/^---\n([\s\S]*?)\n---/);
+    if (!frontMatterMatch) return [];
+
+    const frontMatter = frontMatterMatch[1];
+    const fields: {key: string; defaultValue: string}[] = [];
+
+    const lines = frontMatter.split('\n');
+    for (const line of lines) {
+      // Match simple key: value pairs (skip list items like "  - xxx")
+      const match = line.match(/^([a-zA-Z_][a-zA-Z0-9_]*):\s*(.*)$/);
+      if (match) {
+        const key = match[1];
+        const value = match[2].trim();
+        if (!BUILTIN_FIELDS.includes(key)) {
+          fields.push({ key, defaultValue: value });
+        }
+      }
+    }
+    return fields;
+  };
+
+  // Load template content and extract custom fields
+  const loadTemplateFields = async (templateName: string) => {
+    if (!hexoPath || !isDesktopApp()) return;
+
+    try {
+      const ipcRenderer = await getIpcRenderer();
+      const templatePath = `${hexoPath}/scaffolds/${templateName}.md`;
+      const content = await ipcRenderer.invoke('read-file', templatePath);
+      if (content) {
+        const fields = parseTemplateFields(content);
+        setCustomFields(fields);
+        // Initialize custom field values with defaults
+        const defaults: Record<string, string> = {};
+        fields.forEach(f => {
+          // Don't use template placeholders like {{ title }} as defaults
+          if (f.defaultValue && !f.defaultValue.match(/\{\{.*\}\}/)) {
+            defaults[f.key] = f.defaultValue;
+          } else {
+            defaults[f.key] = '';
+          }
+        });
+        setCustomFieldValues(defaults);
+      }
+    } catch (error) {
+      console.error('读取模板内容失败:', error);
+    }
   };
 
   // 获取可用模板
@@ -154,6 +221,14 @@ export function CreatePostDialog({ open, onOpenChange, onConfirm, isLoading = fa
     }
   }, [open, hexoPath]);
 
+  // Load custom fields from the selected template (default: post)
+  useEffect(() => {
+    if (open && hexoPath) {
+      const templateToLoad = useCustomTemplate ? selectedTemplate : 'post';
+      loadTemplateFields(templateToLoad);
+    }
+  }, [open, hexoPath, useCustomTemplate, selectedTemplate]);
+
   // 点击外部关闭下拉菜单
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -184,6 +259,7 @@ export function CreatePostDialog({ open, onOpenChange, onConfirm, isLoading = fa
     setCategoryInput('');
     setUseCustomTemplate(false);
     setSelectedTemplate('post');
+    setCustomFieldValues({});
     onOpenChange(false);
   };
 
@@ -353,6 +429,27 @@ export function CreatePostDialog({ open, onOpenChange, onConfirm, isLoading = fa
               rows={3}
             />
           </div>
+
+          {/* 自定义字段 (from scaffolds template) */}
+          {customFields.length > 0 && (
+            <div className="space-y-3">
+              <Label className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                {language === 'zh' ? '模板自定义字段' : 'Template Custom Fields'}
+              </Label>
+              {customFields.map((field) => (
+                <div key={field.key} className="space-y-1">
+                  <Label htmlFor={`custom-${field.key}`} className="text-sm">{field.key}</Label>
+                  <Input
+                    id={`custom-${field.key}`}
+                    value={customFieldValues[field.key] || ''}
+                    onChange={(e) => setCustomFieldValues(prev => ({ ...prev, [field.key]: e.target.value }))}
+                    placeholder={field.defaultValue || `${language === 'zh' ? '请输入' : 'Enter'} ${field.key}`}
+                    disabled={isLoading}
+                  />
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* 模板选项 */}
           <div className="space-y-2">
